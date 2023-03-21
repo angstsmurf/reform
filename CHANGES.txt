@@ -1,0 +1,5 @@
+August 2007
+	Added 2 lines to handle one-byte exits in version 6 games (found in Zork0) - ATG
+
+Mon Sep  3 01:45:52 CDT 2007
+	Added 'make clean'. Copied GPL 2 into dir. - ATG

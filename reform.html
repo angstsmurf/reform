@@ -1,0 +1,228 @@
+<p>For more information or to contact the author, visit <a href="http://www.exmsft.com/~benrg/if-decompilers/">http://www.exmsft.com/~benrg/if-decompilers/</a>.
+
+
+<h2>Running Reform</h2>
+
+<p>The command-line syntax is:
+
+<pre>
+  reform storyfile.z5 [-s symfile.reform] [-t] [-x] > output-file
+</pre>
+
+<p>The <tt>-s</tt> option specifies a "symbol file", the format of which is described below. If you don't specify <tt>-s</tt>, then Reform will look for a symbol file named "x.reform", where "x.zn" is the name of the story file you mentioned on the command line.
+
+<p>If you include <tt>-t</tt>, then Reform will output a symbol file template. Otherwise, it will output decompiled quasi-Inform source code. There are no options to suppress certain parts of the decompilation, but it wouldn't be hard to add them.
+
+<p>The generated symbol file template contains some cross-reference information to make it easier to choose names for things: each attribute comes with a list of the objects which have that attribute when the game begins, each action with a list of all the grammar lines which produce it, and routines which are mentioned in object properties are preceded by a comment listing those properties.
+
+<p>It's perfectly okay to use <tt>-s</tt> and <tt>-t</tt> together. It can be useful to create the symbol file in stages: for example, first giving names to some attributes, then generating a new template file in which those attributes will appear in the grammar lines next to actions.
+
+<p>Reform has various internal heuristics to guess the names and types of various things, so you'll often get semi-readable output even without a symbol file.
+
+<p>If you include <tt>-x</tt> on the command line, then Reform will put the hex addresses of all constants in the generated source code, which is useful for hacking game files to eliminate annoying inventory limits, random events, and whatnot.
+
+
+<h2>Symbol file reference</h2>
+
+<p>The symbol file format is a ripoff of the format used in Allen Garvin's "ztool". They are not compatible, but the Reform distribution includes converted versions of nearly all of his files.
+
+<p>A symbol file is a list of directives, each of which must be on a separate line. The line begins with the name of the directive. Most directives take arguments, which are separated by spaces from the name and each other. If you want to include spaces in an argument, you can surround it by quotes. (This is probably never useful.)
+
+<p>Comments begin with <tt>!</tt> and continue to the end of the line, as in Inform.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+MD5	C44B2CD392B505C123FADE5DFE1E1BE0
+</pre>
+
+<p>Gives the MD5 hash of the story file to which this symbol file is supposed to refer. This must be exactly 32 hex digits. Reform will abort with an error if the MD5 of the story file doesn't match this.
+
+<p>In the case of a blorb file, this is the hash of the embedded story file, not of the whole blorb. If the story file gives its own length in the header, only that much of the file is hashed. 
+
+<p>There can be more than one MD5 directive; Reform will accept any story file which matches any of them.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+CodeArea    0x1234 0x5678
+StringArea  0x5678 0x9ABC
+</pre>
+
+<p>Tells Reform that the specified byte address range contains z-code which it should try to disassemble, or strings which it should try to decode. The low address is inclusive, and the high address is exclusive. (This is also the way TXD does it.)
+
+<p>If there are no CodeArea or StringArea directives, Reform will try to find the code and data itself. It's not as good at this as TXD is.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+FalseEnd  0x1234  1
+</pre>
+
+<p>Reform assumes that a z-code routine ends after the last reachable instruction, but sometimes this doesn't work, because routines have unreachable code. FalseEnd takes a routine address and a "number of false ends" -- i.e. the number of times it looks like the routine is ending, but actually isn't.
+
+<p>Usually, Reform will tell you when you need this. For example, if you see the following in the output:
+
+<pre>
+  ! Code appears to end here. If the strings below look like
+  ! garbage, try adding this directive to the symbol file:
+  !   FalseEnd 0x2d8cc 1
+</pre>
+
+<p>and the strings <em>do</em> look like garbage, add the directive and decompile again. You may have to repeat this process several times. TXD has better heuristics and doesn't need this babying; maybe someday Reform won't either.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Object     117  babel_fish_dispenser
+Attribute   30  drinkable
+Action      81  Hitchhike
+</pre>
+
+<p>Gives a name to an object, attribute, or action.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Global	80	Have_Headache:bool
+</pre>
+
+<p>Gives a name and type to a global variable. The type is optional. The legal types are:
+
+<p><table>
+<tr><td><tt>?</tt><td>an unknown type (same as leaving off the type)
+<tr><td><tt>object</tt><td>an object number
+<tr><td><tt>property</tt><td>a property number
+<tr><td><tt>attribute</tt><td>an attribute number
+<tr><td><tt>attribute0&nbsp;&nbsp;&nbsp;</tt><td>an attribute number or 0 (otherwise 0 prints as the name of attribute #0).
+<tr><td><tt>routine</tt><td>a routine packed address
+<tr><td><tt>string</tt><td>a string packed address
+<tr><td><tt>char</tt><td>a ZSCII character
+<tr><td><tt>unicode</tt><td>a Unicode character
+<tr><td><tt>int</tt><td>a number (currently always printed as 0-65535)
+<tr><td><tt>bool</tt><td>a boolean value ("true" or "false")
+<tr><td><tt>dictword</tt><td>a dictionary word
+<tr><td><tt>action</tt><td>an action
+<tr><td><tt>adjective</tt><td>an Infocom adjective number
+<tr><td><tt>verbnum</tt><td>an Infocom verb number
+<tr><td><tt>thing</tt><td>an Inform "thing" (an object, a routine, or a string, depending on address)
+<tr><td><tt>^</tt><i>arraytype</i><td>the address of an array with the given type
+</table>
+
+<p>For information on array types, see the <tt>Array</tt> directive below.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Enum	typename	FLAG1=128 FLAG2=64 FOO=5 BAR=6
+</pre>
+
+<p>This defines a new enumerated type named <tt>typename</tt>, which you can use just like the other value types listed above. A value of an enumerated type prints as some combination of the constants you specify. For example, the number 128 will print as <tt>FLAG1</tt>, 197 will print as <tt>(FLAG1|FLAG2|FOO)</tt>, and so on.
+
+<p>The constants will show up in the generated source code.
+
+<p>You can use the new type anywhere in the symbol file, even before the <tt>Enum</tt> directive.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+LastGlobal	220
+</pre>
+
+<p>This specifies the highest global variable number used in the program. To save memory, Zilch didn't pad the global variable table with zeroes to give it 240 entries, so without this directive you'll end up with spurious nonzero "globals" which are never used.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Array	0x1234	foo:array(20*(int,routine))
+</pre>
+
+<p>Gives a name and type to an array living at the given address. For each <tt>Array</tt> directive, Reform will dump the (initial) contents of the array in the story file as an Inform <tt>Array</tt>.
+
+<p>Array types look like this:
+
+<p><table>
+<tr><td valign="top"><tt>array(int,char)</tt><td valign="top">An array of two words, of types <tt>int</tt> and <tt>char</tt>
+<tr><td valign="top"><tt>array(20*int)</tt><td valign="top">An array of 20 words of type <tt>int</tt>
+<tr><td valign="top"><tt>array(20*(int,char))</tt><td valign="top">An array of 40 words, with types alternating between <tt>int</tt> and <tt>char</tt>
+<tr><td valign="top"><tt>array(*(int,char))</tt><td valign="top">An array of unknown length, with types alternating between <tt>int</tt> and <tt>char</tt>
+<tr><td valign="top"><tt>array(int,n*(int,char))</tt><td valign="top">An integer, followed by that many <tt>int</tt> and <tt>char</tt> values. (If the initial word is 10, there are a total of 21 words in the array.)
+<tr><td valign="top"><tt>table(int,char)</tt><td valign="top">An alternate syntax for <tt>array(int,n*(int,char))</tt>
+<tr><td valign="top"><tt>array(20*(int,~char))</tt><td valign="top">An array of 20 three-byte records (60 bytes total), each record being an <tt>int</tt> word followed by a <tt>char</tt> byte
+<tr><td valign="top"><tt>array(~int,~int,n*(dictword,~int,~int))</tt><td valign="top">The parse array for the <tt>@read</tt> Z-machine instruction
+</table>
+
+<p>Any of the types from the <tt>Global</tt> section are legal as element types here, including array pointers: if you write <tt>array(10*^table(string))</tt> it means an array of ten elements, each the address of a table of strings. If there is no separate <tt>Array</tt> directive for those addresses, Reform will dump their contents "inline", like Allen Garvin's ztool.
+
+<p>The following aliases are also available (these are particularly convenient for <tt>Property</tt> directives):
+
+<p><table>
+<tr><td><tt>objbytes</tt><td><tt>array(*~object)</tt></tr>
+<tr><td><tt>objwords</tt><td><tt>array(*object)</tt></tr>
+<tr><td><tt>things</tt><td><tt>array(*thing)</tt></tr>
+<tr><td><tt>routines</tt><td><tt>array(*routine)</tt></tr>
+<tr><td><tt>strings</tt><td><tt>array(*string)</tt></tr>
+<tr><td><tt>dictwords&nbsp;&nbsp;&nbsp;</tt><td><tt>array(*dictword)</tt></tr>
+<tr><td><tt>adjbytes</tt><td><tt>array(*~adjective)</tt></tr>
+<tr><td><tt>pseudo</tt><td><tt>array(*(dictword,routine))</tt> (found in Infocom story files)</tr>
+</table>
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+GlobalArray	0x12	foo:array(20*(int,routine))
+</pre>
+
+<p>Infocom story files tend to have global variables which point to static tables and are never reassigned during play. <tt>GlobalArray</tt> makes these look more like Inform arrays. For example, if global 0x12 contains 0x3456 at startup, then the <tt>GlobalArray</tt> directive above is approximately equivalent to
+
+<pre>
+  Global  0x12    foo:^array(20*(int,routine))
+  Array   0x3456  foo:array(20*(int,routine))
+</pre>
+
+<p>except that the value of the global isn't printed separately (it would be "<tt>Global foo = foo;</tt>").
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Property	59	aft_to:exit
+</pre>
+
+<p>Gives a name and type to an object property. The legal types are all those listed under <tt>Global</tt>, plus all those listed under <tt>Array</tt>, plus these two additional types:
+
+<p><table>
+<tr><td><tt>exit</tt><td>a ZIL "exit" property
+<tr><td><tt>bzexit&nbsp;&nbsp;&nbsp;</tt><td>a variant "exit" format that I've only seen in Beyond Zork
+</table>
+
+<p>"Exit" properties are described in "Learning ZIL", and are one of:
+
+<ul>
+<li>(dir TO room)
+<li>(dir PER routine)
+<li>(dir SORRY string)
+<li>(dir TO room IF global ELSE string)
+<li>(dir TO room IF door IS OPEN ELSE string)
+</ul>
+
+<p>Reform displays the first three of these as just a room, routine, or string (a la Inform), and the last two roughly in the ZIL format.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Routine  0x8e58  PrintContents obj:object itm nextitem first last
+</pre>
+
+<p>Gives a name and type to a routine and its parameters/locals. The allowed types are those listed in the Global directive.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+PrintRoutine  0x1234  the
+</pre>
+
+<p>This is supposed to specify that a routine should be disassembled as "<tt>print (the)foo</tt>" instead of "<tt>the(foo)</tt>", but I can't remember if it works properly.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Word  laser-as  laser-assisted
+</pre>
+
+<p>Gives the full version of a truncated dictionary word.
+
+
+<pre style="background-color:#DDDDDD; padding:2">
+Zilch
+Inform5
+Inform6
+</pre>
+
+Specifies the compiler which produced the story file. Usually Reform can auto-guess this.
