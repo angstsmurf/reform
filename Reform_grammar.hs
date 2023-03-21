@@ -36,8 +36,8 @@ import Control.Monad (when,liftM,liftM2,replicateM)
 import Control.Monad.State (evalState)
 import Data.Array (Array,listArray,accumArray,(!),elems,bounds)
 import Data.Bits (shiftR,testBit,(.&.),(.|.))
-import Ix (range)
-import Maybe (isJust,fromMaybe)
+import Data.Ix (range)
+import Data.Maybe (isJust,fromMaybe)
 import Numeric (showHex)
 
 

@@ -18,14 +18,14 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_decompile (
-	decompile
+    decompile
 ) where
 
 
 import Reform_zcode
 
-import List (sort)
-import Maybe (fromMaybe)
+import GHC.OldList (sort)
+import Data.Maybe (fromMaybe)
 
 
 decompile        :: [ZInstr] -> [ZInstr]

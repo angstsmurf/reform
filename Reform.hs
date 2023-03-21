@@ -33,11 +33,11 @@ import Reform_util
 import Reform_zcode
 import Reform_zscii
 
-import Char (toLower)
+import Data.Char (toLower)
 import Control.Monad (unless)
 import Data.Array ((!),elems)
 import Data.Tree
-import Maybe
+import Data.Maybe
 import Numeric (showHex)
 import System (exitFailure)
 import IO

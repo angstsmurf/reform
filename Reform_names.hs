@@ -33,12 +33,12 @@ import Reform_util
 import Reform_objects
 import Reform_grammar
 
-import Char (toLower)
+import Data.Char (toLower)
 import Control.Monad (liftM,liftM4,replicateM)
 import Control.Monad.State (evalState)
 import Data.Array
-import Ix (inRange)
-import Maybe (fromMaybe,fromJust,isJust)
+import Data.Ix (inRange)
+import Data.Maybe (fromMaybe,fromJust,isJust)
 
 
 {--------------------}

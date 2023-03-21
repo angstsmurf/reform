@@ -24,7 +24,7 @@ module Reform_util (
 ) where
 
 
-import List (sortBy)
+import GHC.OldList (sortBy)
 import Numeric (showHex)
 
 

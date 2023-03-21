@@ -40,10 +40,10 @@ import Reform_inference
 import Control.Monad (replicateM,liftM,liftM2)
 import Control.Monad.State (evalState)
 import Data.Array
-import Ix (inRange,range)
-import Maybe (fromMaybe,listToMaybe,mapMaybe,isJust,isNothing)
+import Data.Ix (inRange,range)
+import Data.Maybe (fromMaybe,listToMaybe,mapMaybe,isJust,isNothing)
 import Numeric (showHex,showIntAtBase)
-import Char (ord,chr,toLower,isAlphaNum)
+import Data.Char (ord,chr,toLower,isAlphaNum)
 import Data.PackedString (packString,indexPS)
 import Data.Bits
 import List (sort,nub)

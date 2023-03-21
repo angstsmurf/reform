@@ -27,7 +27,7 @@ module Reform_zcode (
 	makeVar
 ) where
 
-import Ix
+import Data.Ix
 
 
 --                    name     op       indir  args     store          branch

@@ -33,7 +33,7 @@ import Reform_zscii
 
 import Control.Monad (liftM2)
 import Control.Monad.State (evalState)
-import Maybe (isJust)
+import Data.Maybe (isJust)
 import Numeric (showHex)
 
 

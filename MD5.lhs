@@ -54,8 +54,9 @@ module MD5 (
 	getAsString
 ) where
 
-import Char (intToDigit)
-import Control.Monad.ST (ST,stToIO,unsafeIOToST)
+import Data.Char (intToDigit)
+import Control.Monad.ST.Unsafe (unsafeIOToST)
+import Control.Monad.ST (ST,stToIO)
 import Data.Array.Base (UArray(..),STUArray(..))
 import Data.Array.IArray (bounds,listArray,(!))
 import Data.Array.IO.Internals (IOUArray(..))
@@ -64,9 +65,10 @@ import Data.Array.Storable (StorableArray,withStorableArray)
 import Data.Bits ((.&.),shiftR)
 import Data.Word (Word8,Word32)
 import Foreign (Storable,sizeOf,Ptr,plusPtr,castPtr,allocaBytes,alloca,
-		peekElemOff,peekArray,poke,pokeArray,unsafePerformIO)
-import Foreign.C.Types (CUInt)
-import Ix (Ix,index,inRange)
+		peekElemOff,peekArray,poke,pokeArray)
+import Foreign.C.Types
+import System.IO.Unsafe (unsafePerformIO)
+import GHC.Ix (Ix,index,inRange)
 import GHC.Prim (ByteArray#,MutableByteArray#)
 
 --------

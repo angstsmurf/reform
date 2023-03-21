@@ -34,12 +34,14 @@ module Reform_storyfile (
 
 
 import qualified ReadBinary
+import System.Environment
 import qualified MD5
-import Char (chr,ord,intToDigit,toLower)
+import qualified Data.ByteString.Lazy as L
+import Data.Char (chr,ord,intToDigit,toLower)
 import Control.Monad (replicateM)
-import Control.Monad.State (State,get,put,evalState)
+import Control.Monad.State.Lazy (State,get,put,evalState)
 import Data.Bits (shiftR,(.&.))
-import Ix (inRange)
+import Data.Ix (inRange)
 import System.IO.Unsafe (unsafePerformIO)
 import Foreign (plusPtr)
 
@@ -49,7 +51,6 @@ import Reform_cmdline
 (storyFile,storyFileLen) =
   handleBlorb $ unsafePerformIO $
     ReadBinary.readBinaryFile storyFileName
-
 
 storyFileMD5 =
   map toLower $ MD5.getAsString $ unsafePerformIO $

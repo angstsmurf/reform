@@ -40,8 +40,8 @@ import Data.Array.IArray
 import Data.Array.Unboxed
 import Control.Monad (msum,mplus,fmap,liftM)
 import List (sortBy)
-import Maybe (isJust,fromMaybe,fromJust)
-import Char (toLower,isSpace,isDigit)
+import Data.Maybe (isJust,fromMaybe,fromJust)
+import Data.Char (toLower,isSpace,isDigit)
 import System.IO.Unsafe (unsafePerformIO)
 import Debug.Trace (trace)
 

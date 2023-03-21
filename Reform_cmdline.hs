@@ -25,7 +25,8 @@ module Reform_cmdline (
 ) where
 
 
-import System (getArgs,exitFailure)
+import System.Environment (getArgs)
+import System.Exit (exitFailure)
 import System.IO.Unsafe (unsafePerformIO)
 
 

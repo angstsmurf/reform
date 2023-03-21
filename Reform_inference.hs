@@ -28,7 +28,7 @@ import Reform_symfile
 import Reform_objects
 
 import Data.Array
-import Maybe
+import Data.Maybe
 
 
 type LookupLocal = Int -> ZType

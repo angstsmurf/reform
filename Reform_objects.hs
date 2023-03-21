@@ -40,9 +40,9 @@ import Control.Monad.State (evalState,runState)
 import Data.Bits ((.&.),shiftR,testBit)
 import Data.Tree (Tree(..),Forest)
 import Debug.Trace (trace)
-import Ix (inRange)
+import Data.Ix (inRange)
 import List (sortBy,partition)
-import Maybe (fromMaybe,maybeToList)
+import Data.Maybe (fromMaybe,maybeToList)
 import Numeric (showHex)
 
 
