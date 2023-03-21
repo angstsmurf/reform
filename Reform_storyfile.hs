@@ -18,52 +18,57 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_storyfile (
-	evalFrom, fromTo, byteAt, wordAt, swordAt,
-	storyFileLen, storyFileMD5,
-	hdrVersion, hdrRelease,
-	hdrInformVersion,
-	hdrHighMemBase, hdrMainFuncAddr,
-	hdrDictionaryAddr, hdrObjectTableAddr, hdrGlobalVarTableAddr,
-	hdrStaticMemoryBaseAddr, hdrSerial, hdrAbbrevTableAddr,
-	hdrAlphabetTableAddr, hdrUnicodeTableAddr,
-	hdrCompiler, ZCompiler(..),
-	ver, unpackRoutineAddr, unpackStringAddr, alignPaddr,
-	DataBlock, StreamReader, getPos, isEOS, getTable,
-	getUByte, peekUByte, getBytes, getUWord, getSWord, repeatUntilEmpty
+    evalFrom, fromTo, byteAt, wordAt, swordAt,
+    storyFileLen, storyFileMD5,
+    hdrVersion, hdrRelease,
+    hdrInformVersion,
+    hdrHighMemBase, hdrMainFuncAddr,
+    hdrDictionaryAddr, hdrObjectTableAddr, hdrGlobalVarTableAddr,
+    hdrStaticMemoryBaseAddr, hdrSerial, hdrAbbrevTableAddr,
+    hdrAlphabetTableAddr, hdrUnicodeTableAddr,
+    hdrCompiler, ZCompiler(..),
+    ver, unpackRoutineAddr, unpackStringAddr, alignPaddr,
+    DataBlock, StreamReader, getPos, isEOS, getTable,
+    getUByte, peekUByte, getBytes, getUWord, getSWord, repeatUntilEmpty
 ) where
 
 
-import qualified ReadBinary
-import System.Environment
-import qualified MD5
-import qualified Data.ByteString.Lazy as L
+--import qualified ReadBinary
+--import qualified MD5
 import Data.Char (chr,ord,intToDigit,toLower)
 import Control.Monad (replicateM)
-import Control.Monad.State.Lazy (State,get,put,evalState)
+import Control.Monad.State (State,get,put,evalState)
 import Data.Bits (shiftR,(.&.))
 import Data.Ix (inRange)
 import System.IO.Unsafe (unsafePerformIO)
 import Foreign (plusPtr)
-
+import qualified Data.ByteString as BSTR
 import Reform_cmdline
 
+getFileContentAndLen :: String -> IO (BSTR.ByteString, Int)
+getFileContentAndLen filename = do
+    f <- BSTR.readFile filename
+    return (f, BSTR.length f)
 
 (storyFile,storyFileLen) =
   handleBlorb $ unsafePerformIO $
-    ReadBinary.readBinaryFile storyFileName
+    getFileContentAndLen storyFileName
 
-storyFileMD5 =
+
+{-storyFileMD5 =
   map toLower $ MD5.getAsString $ unsafePerformIO $
     MD5.hashPtrBytes MD5.empty storyFile storyFileLen
   where realLen =
           if hdrFileLength > 0 && hdrFileLength <= storyFileLen
             then hdrFileLength
-            else storyFileLen
+            else storyFileLen-}
+storyFileMD5 = "0"
 
 
 byteAt,wordAt,swordAt :: Int -> Int
 
-byteAt = ReadBinary.byteAt storyFile
+--byteAt = ReadBinary.byteAt storyFile
+byteAt n = fromIntegral $ BSTR.index storyFile n
 
 wordAt n = byteAt n * 256 + byteAt (n+1)
 swordAt n =
@@ -181,31 +186,31 @@ hdrCompiler =
 {-------------}
 
 
-handleBlorb :: (ReadBinary.BinaryData, Int)
-            -> (ReadBinary.BinaryData, Int)
+handleBlorb :: (BSTR.ByteString, Int)
+            -> (BSTR.ByteString, Int)
 
 handleBlorb (p,size) =
-  if dwordAt 0 /= 0x464F524D then
+  if dwordAt' 0 /= 0x464F524D then
     (p,size)
-  else if dwordAt 8 /= 0x49465253 || dwordAt 12 /= 0x52496478 then
+  else if dwordAt' 8 /= 0x49465253 || dwordAt' 12 /= 0x52496478 then
     error "Unrecognized blorb file format"
   else
-    let numResources = dwordAt 16
+    let numResources = dwordAt' 16
         resources = take numResources
-                     [(dwordAt n, dwordAt (n+8)) | n <- [24,36..]]
+                     [(dwordAt' n, dwordAt' (n+8)) | n <- [24,36..]]
     in case [pos | (0x45786563,pos) <- resources] of
          []    -> error "No story file in blorb"
-         [pos] -> case dwordAt pos of
-                    0x5A434F44 -> (p `plusPtr` (pos+8), dwordAt (pos+4))
+         [pos] -> case dwordAt' pos of
+                    0x5A434F44 -> (BSTR.drop (pos+8) p, dwordAt' (pos+4))
                     0x474C554C -> error "This appears to be a Glulx blorb. Try Mrifk."
                     _          -> error "Unrecognized blorb file format"
          _     -> error "More than one story file found. You'll have to extract one by hand."
   where
-    byteAt  n = ReadBinary.byteAt p n
-    dwordAt n = byteAt n * 16777216
-              + byteAt (n+1) * 65536
-              + byteAt (n+2) * 256
-              + byteAt (n+3)
+    byteAt'  n = fromIntegral $ BSTR.index p n
+    dwordAt' n = byteAt' n * 16777216
+              + byteAt' (n+1) * 65536
+              + byteAt' (n+2) * 256
+              + byteAt' (n+3)
 
 
 {-------------}
@@ -229,7 +234,7 @@ isEOS =
 getUByte :: StreamReader Int
 getUByte =
   do (a,z) <- get
-     put (a+1,z)	-- should probably bounds-check
+     put (a+1,z)    -- should probably bounds-check
      return (byteAt a)
 
 peekUByte :: StreamReader Int
@@ -240,7 +245,7 @@ peekUByte =
 getBytes :: Int -> StreamReader DataBlock
 getBytes n =
   do (a,z) <- get
-     put (a+n,z)	-- definitely bounds-check
+     put (a+n,z)    -- definitely bounds-check
      return (a,a+n)
 
 

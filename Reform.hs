@@ -17,7 +17,7 @@ You can read the GNU General Public License at this URL:
 -}
 
 
-module Main () where
+module Main (main) where
 
 
 import Reform_cmdline
@@ -39,15 +39,15 @@ import Data.Array ((!),elems)
 import Data.Tree
 import Data.Maybe
 import Numeric (showHex)
-import System (exitFailure)
-import IO
+import System.Exit (exitFailure)
+import System.IO
 
 
 {-------------------------------------------------------------------------}
 
 
-reformRelease = "6"
-reformSerial  = "040226"
+reformRelease = "7"
+reformSerial  = "230320"
 
 
 main =

@@ -15,10 +15,10 @@ GNU General Public License for more details.
 You can read the GNU General Public License at this URL:
      http://www.gnu.org/copyleft/gpl.html
 -}
-
+{-# LANGUAGE ImplicitParams #-}
 
 module Reform_inference (
-	inferStmtTypes
+    inferStmtTypes
 ) where
 
 
@@ -161,35 +161,35 @@ findTypeList (x:xs) = x
 primReturnTypes :: Array Prim (LookupLocal -> [Expr] -> ZType)
 primReturnTypes =
   accumArray (\a b -> b) (\_ _ -> TypeUnknown) (minBound,maxBound)
-  [(PrimInvoke,		\loc (func:_) -> case findType loc FindRoutine func of
+  [(PrimInvoke,     \loc (func:_) -> case findType loc FindRoutine func of
                                            TypeRoutinePtr rtn _ -> rtn
                                            _                    -> TypeUnknown),
-   (PrimAnd,		\_ _ -> TypeBool),
-   (PrimOr,		\_ _ -> TypeBool),
-   (PrimGetProp,	\loc [_,prop] -> inferPropType prop),
-   (PrimGetPropAddr,	\loc [_,prop] -> inferPropAddrType prop),
-   (PrimGetPropLen,	\_ _ -> TypeInt),
+   (PrimAnd,        \_ _ -> TypeBool),
+   (PrimOr,     \_ _ -> TypeBool),
+   (PrimGetProp,    \loc [_,prop] -> inferPropType prop),
+   (PrimGetPropAddr,    \loc [_,prop] -> inferPropAddrType prop),
+   (PrimGetPropLen, \_ _ -> TypeInt),
 -- FIXME: +, - unsafe!
-   (PrimPlus,		\_ _ -> TypeInt),		-- FIXME: unsafe
-   (PrimMinus,		\_ _ -> TypeInt),		-- FIXME: unsafe
-   (PrimTimes,		\_ _ -> TypeInt),
-   (PrimDivide,		\_ _ -> TypeInt),
-   (PrimMod,		\_ _ -> TypeInt),
-   (PrimBitOr,		\_ _ -> TypeInt),
-   (PrimBitAnd,		\_ _ -> TypeInt),
-   (PrimBitNot,		\_ _ -> TypeInt),
-   (PrimLogNot,		\_ _ -> TypeBool),
-   (PrimLoadB,		\loc [arg1,arg2] -> inferElemType 1 loc arg1 arg2),
-   (PrimLoadW,		\loc [arg1,arg2] -> inferElemType 2 loc arg1 arg2),
-   (PrimGetParent,	\_ _ -> TypeObject),
-   (PrimGetChild,	\_ _ -> TypeObject),
-   (PrimGetSibling,	\_ _ -> TypeObject),
-   (PrimGetNextProp,	\_ _ -> TypeProp),
-   (PrimRandom,		\_ _ -> TypeInt),
-   (PrimXPreInc,	\loc [arg] -> findType loc FindGeneral arg),
-   (PrimXPostInc,	\loc [arg] -> findType loc FindGeneral arg),
-   (PrimXPreDec,	\loc [arg] -> findType loc FindGeneral arg),
-   (PrimXPostDec,	\loc [arg] -> findType loc FindGeneral arg)]
+   (PrimPlus,       \_ _ -> TypeInt),       -- FIXME: unsafe
+   (PrimMinus,      \_ _ -> TypeInt),       -- FIXME: unsafe
+   (PrimTimes,      \_ _ -> TypeInt),
+   (PrimDivide,     \_ _ -> TypeInt),
+   (PrimMod,        \_ _ -> TypeInt),
+   (PrimBitOr,      \_ _ -> TypeInt),
+   (PrimBitAnd,     \_ _ -> TypeInt),
+   (PrimBitNot,     \_ _ -> TypeInt),
+   (PrimLogNot,     \_ _ -> TypeBool),
+   (PrimLoadB,      \loc [arg1,arg2] -> inferElemType 1 loc arg1 arg2),
+   (PrimLoadW,      \loc [arg1,arg2] -> inferElemType 2 loc arg1 arg2),
+   (PrimGetParent,  \_ _ -> TypeObject),
+   (PrimGetChild,   \_ _ -> TypeObject),
+   (PrimGetSibling, \_ _ -> TypeObject),
+   (PrimGetNextProp,    \_ _ -> TypeProp),
+   (PrimRandom,     \_ _ -> TypeInt),
+   (PrimXPreInc,    \loc [arg] -> findType loc FindGeneral arg),
+   (PrimXPostInc,   \loc [arg] -> findType loc FindGeneral arg),
+   (PrimXPreDec,    \loc [arg] -> findType loc FindGeneral arg),
+   (PrimXPostDec,   \loc [arg] -> findType loc FindGeneral arg)]
 
 
 inferElemType width loc arg1 arg2 =
@@ -217,50 +217,50 @@ inferElemType' width init loop@(elem@(w,t):_) _
 primArgTypes :: Array Prim (LookupLocal -> ZType -> [Expr] -> [ZType])
 primArgTypes =
   array (minBound,maxBound)
-  [(PrimInvoke,		\loc _ (func:_) -> case findType loc FindRoutine func of
+  [(PrimInvoke,     \loc _ (func:_) -> case findType loc FindRoutine func of
                                              t@(TypeRoutinePtr _ ts) -> (t:ts)
                                              _ -> [TypeRoutinePtr TypeUnknown []]),
-   (PrimAnd,		\_ _ _ -> [TypeBool,TypeBool]),
-   (PrimOr,		\_ _ _ -> [TypeBool,TypeBool]),
-   (PrimGetProp,	\_ _ _ -> [TypeObject,TypeProp]),
-   (PrimGetPropAddr,	\_ _ _ -> [TypeObject,TypeProp]),
-   (PrimGetPropLen,	\_ _ _ -> [TypeUnknown]),
-   (PrimPutProp,	\_ _ [_,p,_] -> [TypeObject,TypeProp,inferPropType p]),
+   (PrimAnd,        \_ _ _ -> [TypeBool,TypeBool]),
+   (PrimOr,     \_ _ _ -> [TypeBool,TypeBool]),
+   (PrimGetProp,    \_ _ _ -> [TypeObject,TypeProp]),
+   (PrimGetPropAddr,    \_ _ _ -> [TypeObject,TypeProp]),
+   (PrimGetPropLen, \_ _ _ -> [TypeUnknown]),
+   (PrimPutProp,    \_ _ [_,p,_] -> [TypeObject,TypeProp,inferPropType p]),
 -- FIXME: +, - unsafe!
-   (PrimPlus,		\_ _ _ -> [TypeInt,TypeInt]),			-- arg2 int if arg1 not int, and vice versa
-   (PrimMinus,		\_ _ _ -> [TypeInt,TypeInt]),			-- arg1 and return have same type, in some cases
-   (PrimTimes,		\_ _ _ -> [TypeInt,TypeInt]),
-   (PrimDivide,		\_ _ _ -> [TypeInt,TypeInt]),
-   (PrimMod,		\_ _ _ -> [TypeInt,TypeInt]),
-   (PrimBitOr,		\_ _ _ -> [TypeInt,TypeInt]),
-   (PrimBitAnd,		\_ _ _ -> [TypeInt,TypeInt]),
-   (PrimBitNot,		\_ _ _ -> [TypeInt]),
-   (PrimLogNot,		\_ _ _ -> [TypeBool]),	-- FIXME: safe?
-   (PrimLoadB,		\_ _ _ -> [anonArray,TypeInt]),
-   (PrimLoadW,		\_ _ _ -> [anonArray,TypeInt]),
-   (PrimStoreB,		\loc _ [arg1,arg2,_] -> [anonArray,TypeInt,inferElemType 1 loc arg1 arg2]),
-   (PrimStoreW,		\loc _ [arg1,arg2,_] -> [anonArray,TypeInt,inferElemType 2 loc arg1 arg2]),
-   (PrimGetParent,	\_ _ _ -> [TypeObject]),
-   (PrimGetChild,	\_ _ _ -> [TypeObject]),
-   (PrimGetSibling,	\_ _ _ -> [TypeObject]),
-   (PrimMove,		\_ _ _ -> [TypeObject,TypeObject]),
-   (PrimRemove,		\_ _ _ -> [TypeObject]),
-   (PrimGetNextProp,	\_ _ _ -> [TypeObject,TypeProp]),
-   (PrimFSet,		\_ _ _ -> [TypeObject,TypeAttr False]),
-   (PrimFClear,		\_ _ _ -> [TypeObject,TypeAttr False]),
-   (PrimRandom,		\_ _ _ -> [TypeInt]),
-   (PrimSetTextStyle,	\_ _ _ -> [TypeInt]),
-   (PrimXPreInc,	\_ t _ -> [t]),
-   (PrimXPostInc,	\_ t _ -> [t]),
-   (PrimXPreDec,	\_ t _ -> [t]),
-   (PrimXPostDec,	\_ t _ -> [t]),
-   (PrimNewline,	\_ _ _ -> []),
-   (PrimPrintInline,	\_ _ _ -> [TypeStringAddr]),
-   (PrimPrintAddr,	\_ _ _ -> [TypeStringAddr]),
-   (PrimPrintPaddr,	\_ _ _ -> [TypeStringPaddr]),
-   (PrimPrintObj,	\_ _ _ -> [TypeObject]),
-   (PrimPrintChar,	\_ _ _ -> [TypeZsciiChar]),
-   (PrimPrintNum,	\_ _ _ -> [TypeInt])]
+   (PrimPlus,       \_ _ _ -> [TypeInt,TypeInt]),           -- arg2 int if arg1 not int, and vice versa
+   (PrimMinus,      \_ _ _ -> [TypeInt,TypeInt]),           -- arg1 and return have same type, in some cases
+   (PrimTimes,      \_ _ _ -> [TypeInt,TypeInt]),
+   (PrimDivide,     \_ _ _ -> [TypeInt,TypeInt]),
+   (PrimMod,        \_ _ _ -> [TypeInt,TypeInt]),
+   (PrimBitOr,      \_ _ _ -> [TypeInt,TypeInt]),
+   (PrimBitAnd,     \_ _ _ -> [TypeInt,TypeInt]),
+   (PrimBitNot,     \_ _ _ -> [TypeInt]),
+   (PrimLogNot,     \_ _ _ -> [TypeBool]),  -- FIXME: safe?
+   (PrimLoadB,      \_ _ _ -> [anonArray,TypeInt]),
+   (PrimLoadW,      \_ _ _ -> [anonArray,TypeInt]),
+   (PrimStoreB,     \loc _ [arg1,arg2,_] -> [anonArray,TypeInt,inferElemType 1 loc arg1 arg2]),
+   (PrimStoreW,     \loc _ [arg1,arg2,_] -> [anonArray,TypeInt,inferElemType 2 loc arg1 arg2]),
+   (PrimGetParent,  \_ _ _ -> [TypeObject]),
+   (PrimGetChild,   \_ _ _ -> [TypeObject]),
+   (PrimGetSibling, \_ _ _ -> [TypeObject]),
+   (PrimMove,       \_ _ _ -> [TypeObject,TypeObject]),
+   (PrimRemove,     \_ _ _ -> [TypeObject]),
+   (PrimGetNextProp,    \_ _ _ -> [TypeObject,TypeProp]),
+   (PrimFSet,       \_ _ _ -> [TypeObject,TypeAttr False]),
+   (PrimFClear,     \_ _ _ -> [TypeObject,TypeAttr False]),
+   (PrimRandom,     \_ _ _ -> [TypeInt]),
+   (PrimSetTextStyle,   \_ _ _ -> [TypeInt]),
+   (PrimXPreInc,    \_ t _ -> [t]),
+   (PrimXPostInc,   \_ t _ -> [t]),
+   (PrimXPreDec,    \_ t _ -> [t]),
+   (PrimXPostDec,   \_ t _ -> [t]),
+   (PrimNewline,    \_ _ _ -> []),
+   (PrimPrintInline,    \_ _ _ -> [TypeStringAddr]),
+   (PrimPrintAddr,  \_ _ _ -> [TypeStringAddr]),
+   (PrimPrintPaddr, \_ _ _ -> [TypeStringPaddr]),
+   (PrimPrintObj,   \_ _ _ -> [TypeObject]),
+   (PrimPrintChar,  \_ _ _ -> [TypeZsciiChar]),
+   (PrimPrintNum,   \_ _ _ -> [TypeInt])]
 
 anonArray = TypeArrayPtr (ArrayInfo UnknownLength [] [(2,TypeUnknown)])
 
@@ -284,16 +284,16 @@ inferPropAddrType _ = TypeUnknown
 primJumpArgTypes :: Array PrimJump (LookupLocal -> [Expr] -> [ZType])
 primJumpArgTypes =
   array (minBound,maxBound)
-  [(PrimIn,		\_ _ -> repeat TypeObject),
-   (PrimHas,		\_ _ -> TypeObject : repeat (TypeAttr False)),
-   (PrimEq,		equalTypes),
+  [(PrimIn,     \_ _ -> repeat TypeObject),
+   (PrimHas,        \_ _ -> TypeObject : repeat (TypeAttr False)),
+   (PrimEq,     equalTypes),
 -- FIXME: would be better not to assume ints for < and >
-   (PrimLt,		\_ _ -> repeat TypeInt),	-- was equalTypes
-   (PrimGt,		\_ _ -> repeat TypeInt),	-- was equalTypes
-   (PrimEq0,		\_ _ -> [TypeUnknown]),
-   (PrimBitTest,	\_ _ -> [TypeInt,TypeInt]),
-   (PrimXDecChk,	\_ _ -> [TypeInt,TypeInt]),	-- was equalTypes
-   (PrimXIncChk,	\_ _ -> [TypeInt,TypeInt])]	-- was equalTypes
+   (PrimLt,     \_ _ -> repeat TypeInt),    -- was equalTypes
+   (PrimGt,     \_ _ -> repeat TypeInt),    -- was equalTypes
+   (PrimEq0,        \_ _ -> [TypeUnknown]),
+   (PrimBitTest,    \_ _ -> [TypeInt,TypeInt]),
+   (PrimXDecChk,    \_ _ -> [TypeInt,TypeInt]), -- was equalTypes
+   (PrimXIncChk,    \_ _ -> [TypeInt,TypeInt])] -- was equalTypes
 
 
 equalTypes loc args =

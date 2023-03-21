@@ -15,19 +15,20 @@ GNU General Public License for more details.
 You can read the GNU General Public License at this URL:
      http://www.gnu.org/copyleft/gpl.html
 -}
+{-# LANGUAGE ImplicitParams, ParallelListComp, ScopedTypeVariables #-}
 
 
 module Reform_symfile (
-	SFDirective(..), PropType(..),
-	syms, usedSymFileName,
-	sfPrintFunc,
-	sfRoutineType, sfLocalType, sfLocalTypes,
-	sfGlobalType, sfGlobalSilent, sfArrayType,
-	sfFalseEnd,
-	sfFullDictWord, sfWordNamed,
-	lastGlobal, compiler,
-	wordTypeNames, propTypeNames, arrayTypeNames,
-	knownType, knownPropType
+    SFDirective(..), PropType(..),
+    syms, usedSymFileName,
+    sfPrintFunc,
+    sfRoutineType, sfLocalType, sfLocalTypes,
+    sfGlobalType, sfGlobalSilent, sfArrayType,
+    sfFalseEnd,
+    sfFullDictWord, sfWordNamed,
+    lastGlobal, compiler,
+    wordTypeNames, propTypeNames, arrayTypeNames,
+    knownType, knownPropType
 ) where
 
 
@@ -38,8 +39,9 @@ import Reform_cmdline
 
 import Data.Array.IArray
 import Data.Array.Unboxed
+import Control.Exception (catch,IOException)
 import Control.Monad (msum,mplus,fmap,liftM)
-import List (sortBy)
+import Data.List (sortBy)
 import Data.Maybe (isJust,fromMaybe,fromJust)
 import Data.Char (toLower,isSpace,isDigit)
 import System.IO.Unsafe (unsafePerformIO)
@@ -184,7 +186,7 @@ guessSymFileName base =
   reverse (dropWhile ('.' /=) (reverse base)) ++ "reform"
 
 maybeReadFile name =
-  catch (readFile name) (\_ -> return "")
+  catch (readFile name) (\ (e :: IOException) -> return "")
 
 
 {---------------}
@@ -225,25 +227,25 @@ myWords s =
 
 
 directives =
- [("md5",	((==1),	\[(x,_)] -> [SFMD5 x])),
-  ("codearea",	(two,	area SFCodeArea)),
-  ("stringarea",(two,	area SFStringArea)),
-  ("object",	(two,	name SFObjName)),
-  ("attribute",	(two,	name SFAttrName)),
-  ("property",	(two,	property)),
-  ("routine",	((>=2),	routine)),
-  ("global",	(two,	global)),
-  ("array",     (two,	array_)),
-  ("globalarray",(two,	globalArray)),
-  ("action",	(two,	name SFActionName)),
-  ("word",	(two,	\[(x,_),(y,_)] -> [SFFullDictWord x y])),
-  ("printroutine",(two,	name SFPrintRoutine)),
-  ("falseend",	(two,	\[(_,addr),(_,ends)] -> [SFFalseEnd addr ends])),
-  ("lastglobal",((==1),	\[(_,n)] -> [SFLastGlobal n])),
-  ("enum",	((>=2),	enum)),
-  ("zilch",	(zero,	\_ -> [SFCompiler Zilch])),
-  ("inform5",	(zero,	\_ -> [SFCompiler Inform5])),
-  ("inform6",	(zero,	\_ -> [SFCompiler Inform6]))]
+ [("md5",   ((==1), \[(x,_)] -> [SFMD5 x])),
+  ("codearea",  (two,   area SFCodeArea)),
+  ("stringarea",(two,   area SFStringArea)),
+  ("object",    (two,   name SFObjName)),
+  ("attribute", (two,   name SFAttrName)),
+  ("property",  (two,   property)),
+  ("routine",   ((>=2), routine)),
+  ("global",    (two,   global)),
+  ("array",     (two,   array_)),
+  ("globalarray",(two,  globalArray)),
+  ("action",    (two,   name SFActionName)),
+  ("word",  (two,   \[(x,_),(y,_)] -> [SFFullDictWord x y])),
+  ("printroutine",(two, name SFPrintRoutine)),
+  ("falseend",  (two,   \[(_,addr),(_,ends)] -> [SFFalseEnd addr ends])),
+  ("lastglobal",((==1), \[(_,n)] -> [SFLastGlobal n])),
+  ("enum",  ((>=2), enum)),
+  ("zilch", (zero,  \_ -> [SFCompiler Zilch])),
+  ("inform5",   (zero,  \_ -> [SFCompiler Inform5])),
+  ("inform6",   (zero,  \_ -> [SFCompiler Inform6]))]
 
 zero = (0==)
 two  = (2==)
@@ -370,40 +372,40 @@ anonRoutine = TypeRoutinePtr TypeUnknown []
 
 
 wordTypeNames =
- [("?",		TypeUnknown),
-  ("object",	TypeObject),
-  ("property",	TypeProp),
-  ("attribute",	TypeAttr False),
+ [("?",     TypeUnknown),
+  ("object",    TypeObject),
+  ("property",  TypeProp),
+  ("attribute", TypeAttr False),
   ("attribute0",TypeAttr True),
-  ("routine",	TypeRoutinePtr TypeUnknown []),
-  ("string",	TypeStringPaddr),
-  ("char",	TypeZsciiChar),
-  ("unicode",	TypeUnicodeChar),
-  ("int",	TypeInt),
-  ("bool",	TypeBool),
-  ("dictword",	TypeDictWord),
-  ("action",	TypeAction),
-  ("adjective",	TypeAdjectiveNum),
-  ("verbnum",	TypeVerbNum),
-  ("zerotable",	TypeUnknown),	-- FIXME
-  ("thing",	TypeThing)]
+  ("routine",   TypeRoutinePtr TypeUnknown []),
+  ("string",    TypeStringPaddr),
+  ("char",  TypeZsciiChar),
+  ("unicode",   TypeUnicodeChar),
+  ("int",   TypeInt),
+  ("bool",  TypeBool),
+  ("dictword",  TypeDictWord),
+  ("action",    TypeAction),
+  ("adjective", TypeAdjectiveNum),
+  ("verbnum",   TypeVerbNum),
+  ("zerotable", TypeUnknown),   -- FIXME
+  ("thing", TypeThing)]
 
 propTypeNames =
- [("?",		PropTypeUnknown),
-  ("exit",	PropTypeExit),
-  ("bzexit",	PropTypeBZExit)]
+ [("?",     PropTypeUnknown),
+  ("exit",  PropTypeExit),
+  ("bzexit",    PropTypeBZExit)]
 
 arrayTypeNames =
- [("objbytes",	byteArray TypeObject),
-  ("objwords",	wordArray [TypeObject]),
-  ("things",	wordArray [TypeThing]),
-  ("routines",	wordArray [TypeRoutinePtr TypeUnknown []]),
-  ("strings",	wordArray [TypeStringPaddr]),
-  ("dictwords",	wordArray [TypeDictWord]),
-  ("adjbytes",	byteArray TypeAdjectiveNum),
-  ("pseudo",	wordArray [TypeDictWord,TypeRoutinePtr TypeUnknown []]),
-  ("array",	wordArray [TypeUnknown]),
-  ("barray",	byteArray TypeUnknown)]
+ [("objbytes",  byteArray TypeObject),
+  ("objwords",  wordArray [TypeObject]),
+  ("things",    wordArray [TypeThing]),
+  ("routines",  wordArray [TypeRoutinePtr TypeUnknown []]),
+  ("strings",   wordArray [TypeStringPaddr]),
+  ("dictwords", wordArray [TypeDictWord]),
+  ("adjbytes",  byteArray TypeAdjectiveNum),
+  ("pseudo",    wordArray [TypeDictWord,TypeRoutinePtr TypeUnknown []]),
+  ("array", wordArray [TypeUnknown]),
+  ("barray",    byteArray TypeUnknown)]
  where
    wordArray types = ArrayInfo UnknownLength [] (map ((,)2) types)
    byteArray typ   = ArrayInfo UnknownLength [] [(1,typ)]

@@ -18,9 +18,9 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_highmem (
-	himemContents, HimemType(..),
-	isKnownRoutinePaddr, isKnownStringPaddr,
-	routines
+    himemContents, HimemType(..),
+    isKnownRoutinePaddr, isKnownStringPaddr,
+    routines
 ) where
 
 
@@ -91,9 +91,13 @@ getStrings =
 
 findNonZero =
   do x <- isEOS
-     if x then return False else do
-     x <- peekUByte
-     if x /= 0 then return True else findNonZero
+     if x
+     then return False
+     else do
+       x <- peekUByte
+       if x /= 0
+       then return True
+       else findNonZero
 
 
 isKnownRoutinePaddr paddr =
@@ -111,10 +115,12 @@ stringLookup  =
 disasmRoutines =
   do alignPaddr
      x <- routineMayFollow
-     if not x then return [] else do
-     r <- disasmRoutine
-     rs <- disasmRoutines
-     return (r : rs)
+     if not x
+     then return []
+     else do
+       r <- disasmRoutine
+       rs <- disasmRoutines
+       return (r : rs)
 
 
 disasmRoutineBlock =

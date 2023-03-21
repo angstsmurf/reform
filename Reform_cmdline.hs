@@ -18,10 +18,10 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_cmdline (
-	storyFileName,
-	symFileName,
-	generateOutputSymFile,
-	showConstAddrs
+    storyFileName,
+    symFileName,
+    generateOutputSymFile,
+    showConstAddrs
 ) where
 
 

@@ -18,13 +18,13 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_zcode (
-	ZInstr(..), LabelType(..), Expr(..), FuncType(..),
-	ZType(..),
-	ArrayInfo(..), ArrayLengthInfo(..),
-	EnumInfo(..),
-	ZOperation(..),
-	Prim(..), PrimJump(..),
-	makeVar
+    ZInstr(..), LabelType(..), Expr(..), FuncType(..),
+    ZType(..),
+    ArrayInfo(..), ArrayLengthInfo(..),
+    EnumInfo(..),
+    ZOperation(..),
+    Prim(..), PrimJump(..),
+    makeVar
 ) where
 
 import Data.Ix
@@ -58,7 +58,7 @@ data ZType = TypeUnknown
            | TypeInt | TypeBool | TypeEnum EnumInfo
            | TypeAction | TypeDictWord
            | TypeAdjectiveNum | TypeVerbNum
-	   | TypeArrayPtr ArrayInfo
+       | TypeArrayPtr ArrayInfo
            | TypeThing
   deriving (Show,Eq)
 

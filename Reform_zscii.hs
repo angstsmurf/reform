@@ -18,15 +18,15 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_zscii (
-	getZString,
-	getZChars, zCharsToUnicode,
-	zsciiCharToUnicode
+    getZString,
+    getZChars, zCharsToUnicode,
+    zsciiCharToUnicode
 ) where
 
 
 import Reform_storyfile
 
-import Char (chr,ord)
+import Data.Char (chr,ord)
 import Data.Bits ((.&.),shiftR)
 import Control.Monad (liftM,replicateM)
 
@@ -127,8 +127,9 @@ zsciiAlphabet =
 makeAlphabetTable =
   do a <- replicateM 26 getUByte
      b <- replicateM 26 getUByte
-     (c0:c1:cs) <- replicateM 26 getUByte
-     return [a,b,c0:newline:cs]
+     --(c0:c1:cs) <- replicateM 26 getUByte
+     c <- replicateM 26 getUByte
+     return [a,b,(head c):newline:(drop 2 c)]
 
 newline = 13
 

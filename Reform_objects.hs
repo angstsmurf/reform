@@ -15,14 +15,14 @@ GNU General Public License for more details.
 You can read the GNU General Public License at this URL:
      http://www.gnu.org/copyleft/gpl.html
 -}
-
+{-# LANGUAGE ParallelListComp #-}
 
 module Reform_objects (
-	Object, PropVal(..),
-	objects, numObjects, objectForest,
-	propertyDefaults,
-	propType,
-	afterObjectTable
+    Object, PropVal(..),
+    objects, numObjects, objectForest,
+    propertyDefaults,
+    propType,
+    afterObjectTable
 ) where
 
 
@@ -41,7 +41,7 @@ import Data.Bits ((.&.),shiftR,testBit)
 import Data.Tree (Tree(..),Forest)
 import Debug.Trace (trace)
 import Data.Ix (inRange)
-import List (sortBy,partition)
+import Data.List (sortBy,partition)
 import Data.Maybe (fromMaybe,maybeToList)
 import Numeric (showHex)
 
@@ -50,10 +50,10 @@ import Numeric (showHex)
 type Object = (String,Integer,[(Int,PropVal)])
 
 data PropVal
-  = PropValBlock Int DataBlock String	-- string is comment
+  = PropValBlock Int DataBlock String   -- string is comment
   | PropValList [(ZType,Int)]
-  | PropValCEXIT Int Int Int	-- obj, global, string paddr (see "Learning ZIL")
-  | PropValDEXIT Int Int Int	-- obj, doorobj, string paddr (see "Learning ZIL")
+  | PropValCEXIT Int Int Int    -- obj, global, string paddr (see "Learning ZIL")
+  | PropValDEXIT Int Int Int    -- obj, doorobj, string paddr (see "Learning ZIL")
 
 -- obj, parent, sibling, child
 type Object' = (Object,Int,Int,Int)
@@ -101,14 +101,16 @@ objectTableDecode = do
 
 objectTableDecode' sofar minPropAddr = do
   pos      <- getPos
-  if pos >= minPropAddr then return (reverse sofar) else do
-  attrs    <- getAttrs
-  parent   <- if oldObjectFormat then getUByte else getUWord
-  sibling  <- if oldObjectFormat then getUByte else getUWord
-  child    <- if oldObjectFormat then getUByte else getUWord
-  propAddr <- getUWord
-  objectTableDecode' ((attrs,propAddr,parent,sibling,child) : sofar)
-                     (propAddr `min` minPropAddr)
+  if pos >= minPropAddr
+  then return (reverse sofar)
+  else do
+    attrs    <- getAttrs
+    parent   <- if oldObjectFormat then getUByte else getUWord
+    sibling  <- if oldObjectFormat then getUByte else getUWord
+    child    <- if oldObjectFormat then getUByte else getUWord
+    propAddr <- getUWord
+    objectTableDecode' ((attrs,propAddr,parent,sibling,child) : sofar)
+                       (propAddr `min` minPropAddr)
 
 getAttrs =
   do a1 <- getUWord
@@ -148,7 +150,7 @@ propertyTableDecodeInform6 False attrs =
 -- list. Prior to 6.12 the attributes were not moved.
 propertyTableDecodeInform6 True attrs =
   do name   <- getObjectName
-     getProperties	-- ignore this property list
+     getProperties  -- ignore this property list
      attrs  <- if hdrInformVersion < 612 then return attrs else getAttrs
      cprops <- getProperties
      let props = getIndivProps cprops
@@ -208,10 +210,12 @@ getIndivProps props =
 -- FIXME: save privacy info (private prop. if bit 15 set)
 getIndivProp =
   do n     <- getUWord
-     if n == 0 then return Nothing else do
-     len   <- getUByte
-     bytes <- getBytes len
-     return $ Just (n .&. 32767, PropValBlock len bytes "")
+     if n == 0
+     then return Nothing
+     else do
+       len   <- getUByte
+       bytes <- getBytes len
+       return $ Just (n .&. 32767, PropValBlock len bytes "")
 
 
 {-----------}
@@ -330,7 +334,7 @@ makeWords [] = []
 decodeBZExit 0 = Just $ PropValList [(TypeInt,0)]
 decodeBZExit addr =
   case byteAt addr of
-    1 -> Just $ PropValList [(TypeInt,0)]	-- no exit
+    1 -> Just $ PropValList [(TypeInt,0)]   -- no exit
     2 -> Just $ PropValList [(TypeObject,wordAt (addr+2))]
     3 -> Just $ PropValList [(TypeStringPaddr,wordAt (addr+4)),
                              (TypeObject,wordAt (addr+2))]
@@ -338,7 +342,7 @@ decodeBZExit addr =
     5 -> Just $ PropValDEXIT (wordAt (addr+2)) (wordAt (addr+4)) 0
     6 -> Just $ PropValList [(TypeStringPaddr,wordAt (addr+2))]
     7 -> Just $ PropValList [(TypeObject,wordAt (addr+2))]
-    8 -> Just $ PropValList [(TypeInt,0)]	-- no exit
+    8 -> Just $ PropValList [(TypeInt,0)]   -- no exit
     _ -> Nothing
 
 
@@ -372,7 +376,7 @@ guessPropTypeByContents vals
   | all isDictWord valWords  = Just (prop TypeDictWord)
   | and areRoutines          = Just (prop (TypeRoutinePtr TypeUnknown []))
   | and areStrings           = Just (prop TypeStringPaddr)
-  | and areObjects           = Nothing	-- unreliable to guess object #s here
+  | and areObjects           = Nothing  -- unreliable to guess object #s here
   | and (zipWith3 or3 areRoutines areStrings areObjects)
                              = Just (prop TypeThing)
   | otherwise                = Nothing

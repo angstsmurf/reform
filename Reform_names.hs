@@ -15,14 +15,14 @@ GNU General Public License for more details.
 You can read the GNU General Public License at this URL:
      http://www.gnu.org/copyleft/gpl.html
 -}
-
+{-# LANGUAGE ParallelListComp #-}
 
 module Reform_names (
-	nameObject, nameProp, nameAttr,
-	nameRoutine, nameLocal, nameGlobal,
-	nameAction, nameArray, namePrintFunc,
-	sfRoutineNamed, sfGlobalNamed, sfObjectNamed,
-	sfAttrNamed, sfPropNamed, sfActionNamed
+    nameObject, nameProp, nameAttr,
+    nameRoutine, nameLocal, nameGlobal,
+    nameAction, nameArray, namePrintFunc,
+    sfRoutineNamed, sfGlobalNamed, sfObjectNamed,
+    sfAttrNamed, sfPropNamed, sfActionNamed
 ) where
 
 
@@ -236,7 +236,7 @@ sfArrayNames = [(n,t) | SFArray n t _ <- syms]
 {--------------------}
 
 
-nameActionSub addr = Nothing	-- FIXME
+nameActionSub addr = Nothing    -- FIXME
 
 
 namePrintFunc :: Int -> String
@@ -249,16 +249,16 @@ namePrintFunc f =
     Nothing   -> nameRoutine f
 
 specialPrintFuncNames =
- [("rt__chprintc",	"char"),
-  ("rt__chprinta",	"address"),
-  ("rt__chprints",	"string"),
-  ("rt__chprinto",	"object"),
-  ("defart",		"the"),
-  ("indefart",		"a"),
-  ("cdefart",		"The"),
-  ("printshortname",	"name"),
-  ("englishnumber",	"number"),
-  ("print__pname",	"property")]
+ [("rt__chprintc",  "char"),
+  ("rt__chprinta",  "address"),
+  ("rt__chprints",  "string"),
+  ("rt__chprinto",  "object"),
+  ("defart",        "the"),
+  ("indefart",      "a"),
+  ("cdefart",       "The"),
+  ("printshortname",    "name"),
+  ("englishnumber", "number"),
+  ("print__pname",  "property")]
 -}
 
 
@@ -289,8 +289,8 @@ getI6PropNames =
 getI6AttrNames | hdrInformVersion < 610  = return []
                | otherwise  = replicateM 48 getZStringIndirect
 
-getI6ActionNames | hdrInformVersion < 610  = return []	-- FIXME: ???
-                 | otherwise  = replicateM (maxAction+1) getZStringIndirect	-- FIXME: fake actions
+getI6ActionNames | hdrInformVersion < 610  = return []  -- FIXME: ???
+                 | otherwise  = replicateM (maxAction+1) getZStringIndirect -- FIXME: fake actions
   where maxAction =
           maximum [act | (_,lines) <- verbs, GrammarLine _ act _ <- lines]
 

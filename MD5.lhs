@@ -68,7 +68,7 @@ import Foreign (Storable,sizeOf,Ptr,plusPtr,castPtr,allocaBytes,alloca,
 		peekElemOff,peekArray,poke,pokeArray)
 import Foreign.C.Types
 import System.IO.Unsafe (unsafePerformIO)
-import GHC.Ix (Ix,index,inRange)
+import Data.Ix (Ix,index,inRange)
 import GHC.Prim (ByteArray#,MutableByteArray#)
 
 --------

@@ -18,13 +18,13 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_grammar (
-	GrammarLine(..), GrammarToken(..),
-	grammarType, verbs, verbNums,
-	actionRoutines, preactionRoutines,
-	DictWordTag(..),
-	kbdInputCodes, dictionary,
-	dictWordAt, isDictWord,
-	getInfocomAdjectiveNum
+    GrammarLine(..), GrammarToken(..),
+    grammarType, verbs, verbNums,
+    actionRoutines, preactionRoutines,
+    DictWordTag(..),
+    kbdInputCodes, dictionary,
+    dictWordAt, isDictWord,
+    getInfocomAdjectiveNum
 ) where
 
 
@@ -85,7 +85,7 @@ data GrammarToken = ElementaryToken String | Preposition String
 (grammarType,grammarParser,dictDataParser) =
   case compiler of
     Inform6  -> parserType_inform6
-    Inform5  -> ("Inform5", parseGV1 False, parseDictGV1)	-- parseDictGV1???
+    Inform5  -> ("Inform5", parseGV1 False, parseDictGV1)   -- parseDictGV1???
     Zilch
       | ver [6]    -> ("InfocomV6", parseInfocomV6, parseDictInfocomV6)
       | otherwise  ->
@@ -187,13 +187,18 @@ parseInfocomVariableLine =
 parseInfocomVariableLine' 3 = error "Grammar table error: object count too high"
 
 parseInfocomVariableLine' objCount =
-  do if objCount == 0 then return [] else do
-     object1   <- getInfocomObject
-     if objCount == 1 then return [object1] else do
-     byte      <- getUByte
-     let prepIndex2 = byte .&. 63
-     object2   <- getInfocomObject
-     return (object1 : maybePrep' prepIndex2 [object2])
+  do
+    if objCount == 0
+    then return []
+    else do
+      object1   <- getInfocomObject
+      if objCount == 1
+      then return [object1]
+      else do
+        byte      <- getUByte
+        let prepIndex2 = byte .&. 63
+        object2   <- getInfocomObject
+        return (object1 : maybePrep' prepIndex2 [object2])
 
 
 maybePrep' 0 rest = rest
@@ -221,7 +226,7 @@ parseGV1 inform6 =
 fixupGV1Routines parseRoutines (GrammarLine tokens action reverse) =
   GrammarLine (map helper tokens) action reverse where
     helper (ParseRoutine prefix n) = ParseRoutine prefix (parseRoutines !! n)
-    helper (Alternatives tokens)   = Alternatives (map helper tokens)	-- probably unnecessary
+    helper (Alternatives tokens)   = Alternatives (map helper tokens)   -- probably unnecessary
     helper x                       = x
 
 parseGV1Line =
@@ -233,26 +238,29 @@ parseGV1Line =
      return $ GrammarLine tokens actionNum False
 
 getGV1Tokens left =
-  do eos   <- isEOS
-     if eos then return [] else do
-     token <- getUByte
-     if left == 0 && token < 176
-       then (if token == 0 then return []
+  do
+    eos   <- isEOS
+    if eos
+    then return []
+    else do
+      token <- getUByte
+      if left == 0 && token < 176
+      then (if token == 0 then return []
                            else error "bad GV1 token count")
-       else do
-     rest <- getGV1Tokens (if token < 176 then (left-1) else left)
-     return (token : rest)
+      else do
+        rest <- getGV1Tokens (if token < 176 then (left-1) else left)
+        return (token : rest)
 
 
 parseGV1TokenByte t
   | t < 9     = ElementaryToken (elementaryTokenTypes !! t)
   | t < 16    = error ("Illegal token value " ++ show t)
-  | t < 48    = ParseRoutine "noun=" (t-16)	-- FIXME: index into table
-  | t < 80    = ParseRoutine "" (t-48)		-- FIXME: index into table
-  | t < 112   = ParseRoutine "scope=" (t-80)	-- FIXME: index into table
+  | t < 48    = ParseRoutine "noun=" (t-16) -- FIXME: index into table
+  | t < 80    = ParseRoutine "" (t-48)      -- FIXME: index into table
+  | t < 112   = ParseRoutine "scope=" (t-80)    -- FIXME: index into table
   | t < 128   = error ("Illegal token value " ++ show t)
   | t < 176   = Attribute (t-128)
-  | otherwise = prepositionInt t		-- FIXME: index into table?
+  | otherwise = prepositionInt t        -- FIXME: index into table?
 
 
 {---------------}
@@ -306,7 +314,7 @@ groupGV2Tokens [] = []
 {---------------}
 
 
-parseInfocomV6 = return ([],[],[])	-- FIXME
+parseInfocomV6 = return ([],[],[])  -- FIXME
 
 
 {---------------}
@@ -326,10 +334,12 @@ getGrammarTable parser =
 
 getVerbTable parser addr =
   do pos <- getPos
-     if (pos /= addr) then contigError addr pos else do
-     table <- getTable getUByte parser
-     skipZeroes
-     return table
+     if (pos /= addr)
+     then contigError addr pos
+     else do
+       table <- getTable getUByte parser
+       skipZeroes
+       return table
 
 contigError addr pos =
   error ("Grammar table not contiguous: next pointer is 0x" ++ showHex addr (", but expected 0x" ++ showHex pos ""))

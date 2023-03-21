@@ -24,7 +24,7 @@ module Reform_decompile (
 
 import Reform_zcode
 
-import GHC.OldList (sort)
+import Data.List (sort)
 import Data.Maybe (fromMaybe)
 
 
@@ -249,7 +249,7 @@ decompileReady (ZInstr _ (OPrim p) False args store Nothing) =
 decompileReady x@(ZInstr _ (OPrim p) False args store (Just (dir,target))) =
   case pushOrStoreOrEval store (Call (Prim p) args) of
     ZEval expr -> compareWith0 expr
-    ZPush expr -> compareWith0 expr	-- in V3 files, when the result isn't used
+    ZPush expr -> compareWith0 expr -- in V3 files, when the result isn't used
     _          -> Nothing
   where
     compareWith0 expr =

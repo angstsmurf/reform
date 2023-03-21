@@ -18,13 +18,13 @@ You can read the GNU General Public License at this URL:
 
 
 module Reform_util (
-	makeLookupTable, tableLookup,
-	onFst, sortFst, uniq, uniqBy, group,
-	showDecHex
+    makeLookupTable, tableLookup,
+    onFst, sortFst, uniq, uniqBy, group,
+    showDecHex
 ) where
 
 
-import GHC.OldList (sortBy)
+import Data.List (sortBy)
 import Numeric (showHex)
 
 

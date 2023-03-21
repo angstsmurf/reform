@@ -15,13 +15,13 @@ GNU General Public License for more details.
 You can read the GNU General Public License at this URL:
      http://www.gnu.org/copyleft/gpl.html
 -}
-
+{-# LANGUAGE ImplicitParams, ParallelListComp #-}
 
 module Reform_print (
-	ppRoutine, ppObject, ppVerbs,
-	ppString, ppGlobal, ppArray,
-	ppDictEntry,
-	outputSymFile
+    ppRoutine, ppObject, ppVerbs,
+    ppString, ppGlobal, ppArray,
+    ppDictEntry,
+    outputSymFile
 ) where
 
 
@@ -44,9 +44,10 @@ import Data.Ix (inRange,range)
 import Data.Maybe (fromMaybe,listToMaybe,mapMaybe,isJust,isNothing)
 import Numeric (showHex,showIntAtBase)
 import Data.Char (ord,chr,toLower,isAlphaNum)
-import Data.PackedString (packString,indexPS)
+--import Data.PackedString (packString,indexPS)
+--import qualified Data.ByteString as BSTR
 import Data.Bits
-import List (sort,nub)
+import Data.List (sort,nub)
 
 import Debug.Trace (trace)
 
@@ -299,7 +300,7 @@ ppConst' TypeVerbNum n =
 
 ppConst' TypeThing n
   | n == 0     = "nothing"  -- could also be rfalse routine
-  | n == 65535 = "NULL"		-- FIXME: ???
+  | n == 65535 = "NULL"     -- FIXME: ???
   | n <= numObjects  = nameObject n
   | otherwise  =
       let knownRoutine = isKnownRoutinePaddr n
@@ -386,41 +387,41 @@ ppSetTextStyle _ ppExpr [x] = "@set_text_style " ++ ppExpr 99 x
 primInfo :: Array Prim (Int -> (Int -> Expr -> String) -> [Expr] -> String)
 primInfo =
   array (minBound,maxBound)
-  [(PrimInvoke,		normalFunc),
-   (PrimAnd,		binaryLeft2 " && " 2),
-   (PrimOr,		binaryLeft2 " || " 2),
-   (PrimGetProp,	binaryDot),
-   (PrimGetPropAddr,	binaryLeft2 ".&" 10),
-   (PrimGetPropLen,	specialFunc "get_prop_len"),
-   (PrimPutProp,	\prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimGetProp) [x,y]) z)),
-   (PrimPlus,		binaryLeft2 " + " 5),
-   (PrimMinus,		binaryLeft2 " - " 5),
-   (PrimTimes,		binaryLeft2 " * " 6),
-   (PrimDivide,		binaryLeft2 " / " 6),
-   (PrimMod,		binaryLeft2 " % " 6),
-   (PrimBitOr,		binaryLeft2 " | " 6),
-   (PrimBitAnd,		binaryLeft2 " & " 6),
-   (PrimBitNot,		unary "~" 5 7),
-   (PrimLogNot,		unary "~~" 1 3),
-   (PrimLoadB,		binaryLeft2 "->" 7),
-   (PrimLoadW,		binaryLeft2 "-->" 7),
-   (PrimStoreB,		\prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimLoadB) [x,y]) z)),
-   (PrimStoreW,		\prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimLoadW) [x,y]) z)),
-   (PrimGetParent,	specialFunc "parent"),
-   (PrimGetChild,	specialFunc "child"),
-   (PrimGetSibling,	specialFunc "sibling"),
-   (PrimMove,		specialSyntax2 "move " " to "),
-   (PrimRemove,		specialSyntax1 "remove "),
-   (PrimGetNextProp,	specialFunc "get_next_prop"),
-   (PrimFSet,		specialSyntax2 "give " " "),
-   (PrimFClear,		specialSyntax2 "give " " ~"),
-   (PrimRandom,		specialFunc "random"),
-   (PrimSetTextStyle,	ppSetTextStyle),
-   (PrimXPreInc,	unary "++" 8 10),
-   (PrimXPostInc,	unaryPost "++" 8 10),
-   (PrimXPreDec,	unary "--" 8 10),
-   (PrimXPostDec,	unaryPost "--" 8 10),
-   (PrimNewline,	\_ _ _ -> "new_line")]
+  [(PrimInvoke,     normalFunc),
+   (PrimAnd,        binaryLeft2 " && " 2),
+   (PrimOr,     binaryLeft2 " || " 2),
+   (PrimGetProp,    binaryDot),
+   (PrimGetPropAddr,    binaryLeft2 ".&" 10),
+   (PrimGetPropLen, specialFunc "get_prop_len"),
+   (PrimPutProp,    \prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimGetProp) [x,y]) z)),
+   (PrimPlus,       binaryLeft2 " + " 5),
+   (PrimMinus,      binaryLeft2 " - " 5),
+   (PrimTimes,      binaryLeft2 " * " 6),
+   (PrimDivide,     binaryLeft2 " / " 6),
+   (PrimMod,        binaryLeft2 " % " 6),
+   (PrimBitOr,      binaryLeft2 " | " 6),
+   (PrimBitAnd,     binaryLeft2 " & " 6),
+   (PrimBitNot,     unary "~" 5 7),
+   (PrimLogNot,     unary "~~" 1 3),
+   (PrimLoadB,      binaryLeft2 "->" 7),
+   (PrimLoadW,      binaryLeft2 "-->" 7),
+   (PrimStoreB,     \prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimLoadB) [x,y]) z)),
+   (PrimStoreW,     \prec ppExpr [x,y,z] -> ppExpr prec (Assignment (Call (Prim PrimLoadW) [x,y]) z)),
+   (PrimGetParent,  specialFunc "parent"),
+   (PrimGetChild,   specialFunc "child"),
+   (PrimGetSibling, specialFunc "sibling"),
+   (PrimMove,       specialSyntax2 "move " " to "),
+   (PrimRemove,     specialSyntax1 "remove "),
+   (PrimGetNextProp,    specialFunc "get_next_prop"),
+   (PrimFSet,       specialSyntax2 "give " " "),
+   (PrimFClear,     specialSyntax2 "give " " ~"),
+   (PrimRandom,     specialFunc "random"),
+   (PrimSetTextStyle,   ppSetTextStyle),
+   (PrimXPreInc,    unary "++" 8 10),
+   (PrimXPostInc,   unaryPost "++" 8 10),
+   (PrimXPreDec,    unary "--" 8 10),
+   (PrimXPostDec,   unaryPost "--" 8 10),
+   (PrimNewline,    \_ _ _ -> "new_line")]
 
 primJumpInfo ::
   Array PrimJump
@@ -428,12 +429,12 @@ primJumpInfo ::
 
 primJumpInfo =
   array (minBound,maxBound)
-  [(PrimIn,	primJumpNormal " in "  " notin "),
-   (PrimHas,	primJumpNormal " has " " hasnt "),
-   (PrimEq,	primJumpNormal " == "  " ~= "),
-   (PrimLt,	primJumpNormal " < "   " >= "),
-   (PrimGt,	primJumpNormal " > "   " <= "),
-   (PrimEq0,	\b prec ppExpr [x] -> ppExpr prec (if b then Call (Prim PrimLogNot) [x] else x)),
+  [(PrimIn, primJumpNormal " in "  " notin "),
+   (PrimHas,    primJumpNormal " has " " hasnt "),
+   (PrimEq, primJumpNormal " == "  " ~= "),
+   (PrimLt, primJumpNormal " < "   " >= "),
+   (PrimGt, primJumpNormal " > "   " <= "),
+   (PrimEq0,    \b prec ppExpr [x] -> ppExpr prec (if b then Call (Prim PrimLogNot) [x] else x)),
    (PrimBitTest,\b prec ppExpr [x,y] -> ppExpr prec (Call (PrimJump PrimEq b) [Call (Prim PrimBitAnd) [x,y], y])),
    (PrimXDecChk,\b prec ppExpr [x,y] -> ppExpr prec (Call (PrimJump PrimLt b) [Call (Prim PrimXPreDec) [x], y])),
    (PrimXIncChk,\b prec ppExpr [x,y] -> ppExpr prec (Call (PrimJump PrimGt b) [Call (Prim PrimXPreInc) [x], y]))]
